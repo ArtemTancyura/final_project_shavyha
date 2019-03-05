@@ -9,41 +9,70 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\SerializerInterface;
 use App\Exception\JsonHttpException;
+use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
-use Ramsey\Uuid\Uuid;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use App\Normalizer\SellerNormalizer;
 use FOS\RestBundle\Controller\Annotations as Rest;
 
+/**
+ * @Route("api")
+ */
 class SellerController extends AbstractController
 {
+
     /**
-     * @var UserPasswordEncoderInterface
+     * For viewing seller`s own profile
+     *
+     * @Rest\Get("/seller/info")
      */
-    private $passwordEncoder;
-
-
-    public function __construct(UserPasswordEncoderInterface $passwordEncoder)
+    public function infoAction(Request $request)
     {
-        $this->passwordEncoder = $passwordEncoder;
+        $seller = $this->getUser();
+        return $this->json($seller, 200, [], [AbstractNormalizer::GROUPS => [SellerNormalizer::PROFILE]]);
     }
 
     /**
-     * @Rest\Post("/api/registration/seller")
+     * For updating user`s own profile
+     *
+     * @Rest\Put("/seller/update")
      */
-    public function registrationSellerAction(Request $request, SerializerInterface $serializer, ValidatorInterface $validator, UserPasswordEncoderInterface $passwordEncoder)
+    public function updateAction(Request $request, ValidatorInterface $validator, SerializerInterface $serializer, UserPasswordEncoderInterface $passwordEncoder)
     {
-        /** @var Seller $seller */
-        $seller = $serializer->deserialize($request->getContent(), Seller::class, JsonEncoder::FORMAT);
-        $errors = $validator->validate($seller);
+        $seller = $this->getUser();
+        $data = $serializer->deserialize($request->getContent(), Seller::class, JsonEncoder::FORMAT);
+        $errors = $validator->validate($data);
         if (count($errors)) {
             throw new JsonHttpException(400, $errors);
         }
-        $password = $passwordEncoder->encodePassword($seller, $seller->getPassword());
-        $seller->setPassword($password);
-        $seller->setApiToken($uuid4 = Uuid::uuid4());
-        $this->getDoctrine()->getManager()->persist($seller);
-        $this->getDoctrine()->getManager()->flush();
+        if($data->getEmail() != NULL){
+            $seller->setEmail($data->getEmail());
+        }
+        if($data->getName() != NULL){
+            $seller->setName($data->getName());
+        }
+        if($data->getSurname() != NULL){
+            $seller->setSurname($data->getSurname());
+        }
+        if($data->getTitle() != NULL){
+            $seller->setTitle($data->getTitle());
+        }
+        if($data->getTelephone() != NULL){
+            $seller->setTelephone($data->getTelephone());
+        }
+        if($data->getStation() != NULL){
+            $seller->setStation($data->getStation());
+        }
+        if($data->getPassword() != NULL){
+            $password = $passwordEncoder->encodePassword($seller, $data->getPassword());
+            $seller->setPassword($password);
+            $seller->setPassword($password);
+        }
+        $em = $this->getDoctrine()->getManager();
+        $em->persist($seller);
+        $em->flush();
 
-        return $this->json($seller);
+        return $this->json($seller, 200, [], [AbstractNormalizer::GROUPS => [SellerNormalizer::PROFILE]]);
     }
 }

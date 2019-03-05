@@ -5,6 +5,7 @@ namespace App\Normalizer;
 use App\Entity\User;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use App\Exception\JsonHttpException;
 
 class UserNormalizer implements NormalizerInterface
 {
@@ -54,4 +55,5 @@ class UserNormalizer implements NormalizerInterface
     {
         return $user instanceof User;
     }
+
 }

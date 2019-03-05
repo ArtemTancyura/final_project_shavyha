@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity
@@ -22,6 +23,7 @@ class User implements UserInterface
     private $id;
 
     /**
+     * @Assert\Email
      * @ORM\Column(type="string", length=180, unique=true)
      */
     private $email;
@@ -53,9 +55,13 @@ class User implements UserInterface
     private $surname;
 
     /**
+     * @Assert\Regex(pattern="/^\([0-9]{3}\)[0-9]{3}\-[0-9]{4}$/", message="valid telephone type (123)123-1234")
+     *
      * @ORM\Column(type="string", length=255)
      */
     private $telephone;
+
+
 
     public function getId(): ?int
     {
@@ -90,9 +96,6 @@ class User implements UserInterface
     public function getRoles(): array
     {
         $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
-        $roles[] = 'ROLE_USER';
-
         return array_unique($roles);
     }
 
